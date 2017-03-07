@@ -1,55 +1,87 @@
-package cityrun3;
+package application;
+	
+import java.util.ArrayList;
+import java.util.List;
 
 import javafx.animation.AnimationTimer;
 import javafx.animation.FadeTransition;
 import javafx.application.Application;
-import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
+import javafx.stage.Stage;
+import javafx.util.Duration;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.event.EventHandler;
+import javafx.scene.*;
+import javafx.scene.input.*;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
-import javafx.stage.Stage;
-import javafx.util.Duration;
 
-import java.util.ArrayList;
-import java.util.List;
 
 public class Main extends Application {
+	  private Player player;
+	  private Bomb bomb;
+	  private List<Node> cars = new ArrayList<>();
+	  private Pane root;
+	  private Node player1;
+	  private AnimationTimer timer;
+	  
+	@Override
+	//Set up stage
+	public void start(Stage primaryStage) {
+		try {
+			
+			player = new Player();
+			bomb = new Bomb();
+			
+			primaryStage.setFullScreen(true);
+			root = new Pane();
+			player1 = player.createPlayer();
+		    final Circle bomb1 = bomb.createBomb();
+		    Scene scene = new Scene(root);
+			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
+			root.getChildren().add(player1);
+			root.getChildren().add(bomb1);
+			
+			timer = new AnimationTimer() {
+	            @Override
+	            public void handle(long now) {
+	                onUpdate();
+	            }
+	        };
+	        timer.start();
 
-    private AnimationTimer timer;
-    private Pane root;
-    private List<Node> cars = new ArrayList<>();
-    private Node frog;
+			
+		    bomb.moveBombOnMousePress(scene, bomb1);
+		    primaryStage.setScene(scene);
 
-    private Parent createContent() {
-        root = new Pane();
-        root.setPrefSize(600, 800);
-
-        frog = initFrog();
-
-        root.getChildren().add(frog);
-
-        timer = new AnimationTimer() {
-            @Override
-            public void handle(long now) {
-                onUpdate();
-            }
-        };
-        timer.start();
-
-        return root;
-    }
-
-    private Node initFrog() {
-        Rectangle rect = new Rectangle(38, 38, Color.GREEN);
-        rect.setTranslateY(800 - 39);
-
-        return rect;
-    }
+		    primaryStage.getScene().setOnKeyPressed(event -> {
+	            switch (event.getCode()) {
+                case W:
+                    player1.setTranslateY(player1.getTranslateY() - 40);
+                    break;
+                case S:
+                	player1.setTranslateY(player1.getTranslateY() + 40);
+                    break;
+                case A:
+                	player1.setTranslateX(player1.getTranslateX() - 40);
+                    break;
+                case D:
+                	player1.setTranslateX(player1.getTranslateX() + 40);
+                    break;
+                default:
+                    break;
+	            }
+		    });
+		    
+			primaryStage.show();
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
 
     private Node spawnCar() {
         Rectangle rect = new Rectangle(80, 130, Color.RED);
@@ -72,17 +104,17 @@ public class Main extends Application {
 
     private void checkState() {
         for (Node car : cars) {
-            if (car.getBoundsInParent().intersects(frog.getBoundsInParent())) {
+            if (car.getBoundsInParent().intersects(player1.getBoundsInParent())) {
             	timer.stop();
-                String win = "YOU LOSE YOU TWAT";
+                String lose = "You lose.";
 
                 HBox hBox = new HBox();
                 hBox.setTranslateX(300);
                 hBox.setTranslateY(250);
                 root.getChildren().add(hBox);
 
-                for (int i = 0; i < win.toCharArray().length; i++) {
-                    char letter = win.charAt(i);
+                for (int i = 0; i < lose.toCharArray().length; i++) {
+                    char letter = lose.charAt(i);
 
                     Text text = new Text(String.valueOf(letter));
                     text.setFont(Font.font(48));
@@ -96,66 +128,18 @@ public class Main extends Application {
                     ft.play();
                 }
                 
-                frog.setTranslateX(0);
-                frog.setTranslateY(600 - 39);
+                player1.setTranslateX(0);
+                player1.setTranslateY(600 - 39);
                 return;
             }
         }
-/**
-        if (frog.getTranslateY() <= 0) {
-            timer.stop();
-            String win = "YOU WIN";
-
-            HBox hBox = new HBox();
-            hBox.setTranslateX(300);
-            hBox.setTranslateY(250);
-            root.getChildren().add(hBox);
-
-            for (int i = 0; i < win.toCharArray().length; i++) {
-                char letter = win.charAt(i);
-
-                Text text = new Text(String.valueOf(letter));
-                text.setFont(Font.font(48));
-                text.setOpacity(0);
-
-                hBox.getChildren().add(text);
-
-                FadeTransition ft = new FadeTransition(Duration.seconds(0.66), text);
-                ft.setToValue(1);
-                ft.setDelay(Duration.seconds(i * 0.15));
-                ft.play();
-            }
-        }
-        */
     }
+	
 
-    @Override
-    public void start(Stage stage) throws Exception {
-        stage.setScene(new Scene(createContent()));
-		stage.setFullScreen(true);
-        stage.getScene().setOnKeyPressed(event -> {
-            switch (event.getCode()) {
-                case W:
-                    frog.setTranslateY(frog.getTranslateY() - 40);
-                    break;
-                case S:
-                    frog.setTranslateY(frog.getTranslateY() + 40);
-                    break;
-                case A:
-                    frog.setTranslateX(frog.getTranslateX() - 40);
-                    break;
-                case D:
-                    frog.setTranslateX(frog.getTranslateX() + 40);
-                    break;
-                default:
-                    break;
-            }
-        });
+	
+	public static void main(String[] args) {
+		launch(args);
+	}
 
-        stage.show();
-    }
-
-    public static void main(String[] args) {
-        launch(args);
-    }
 }
+
